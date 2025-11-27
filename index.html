@@ -1,2 +1,5 @@
-// Arquivo placeholder para o Vercel reconhecer a raiz
-// A lógica real está em /api/index.js configurado no vercel.json
+// Este arquivo existe apenas para o Vercel detectar o projeto.
+// A lógica real está em /api/index.js
+module.exports = (req, res) => {
+    res.json({ message: "API rodando. Acesse /api/..." });
+};
