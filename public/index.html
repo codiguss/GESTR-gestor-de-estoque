@@ -112,8 +112,7 @@
                 </div>
             </div>
 
-            <div id="lista-ingredientes-temp" class="text-sm text-gray-600 mb-4">
-                </div>
+            <div id="lista-ingredientes-temp" class="text-sm text-gray-600 mb-4"></div>
 
             <div class="flex justify-end gap-2">
                 <button onclick="toggleModal('modal-encomenda')" class="px-4 py-2 text-gray-500">Cancelar</button>
@@ -139,19 +138,13 @@
 
     <script>
         const API_URL = "/api";
-        
-        // Estado temporário para criação de encomenda
-        let ingredientesTemp = []; 
+        let ingredientesTemp = [];
 
-        // --- NAVEGAÇÃO ---
         function navTo(screenId, el) {
             document.querySelectorAll('.view').forEach(d => d.classList.add('hidden'));
             document.getElementById('view-' + screenId).classList.remove('hidden');
-            
             document.querySelectorAll('.nav-item').forEach(d => d.classList.remove('active'));
             if(el) el.classList.add('active');
-
-            // Carregar dados específicos ao entrar na tela
             if(screenId === 'insumos') carregarInsumos();
             if(screenId === 'encomendas') carregarEncomendas();
             if(screenId === 'vendas') carregarSelectEncomendas();
@@ -162,7 +155,6 @@
             el.classList.toggle('hidden');
         }
 
-        // --- API HELPER ---
         async function api(endpoint, method = 'GET', body = null) {
             const options = { method, headers: { 'Content-Type': 'application/json' } };
             if (body) options.body = JSON.stringify(body);
@@ -171,12 +163,10 @@
                 return await res.json();
             } catch (error) {
                 alert("Erro de conexão com o servidor!");
-                console.error(error);
                 return null;
             }
         }
 
-        // --- INSUMOS ---
         async function carregarInsumos() {
             const dados = await api('/insumos');
             const lista = document.getElementById('lista-insumos');
@@ -203,11 +193,9 @@
             await api('/insumos', 'POST', body);
             toggleModal('modal-insumo');
             carregarInsumos();
-            // Limpar form
             document.getElementById('ins-nome').value = '';
         }
 
-        // --- ENCOMENDAS ---
         async function carregarEncomendas() {
             const dados = await api('/encomendas');
             document.getElementById('lista-encomendas').innerHTML = dados.map(e => `
@@ -224,12 +212,9 @@
         async function abrirCriarEncomenda() {
             ingredientesTemp = [];
             atualizarListaTemp();
-            
-            // Carregar insumos no select
             const insumos = await api('/insumos');
             const select = document.getElementById('enc-select-insumo');
             select.innerHTML = insumos.map(i => `<option value="${i._id}" data-nome="${i.nome}" data-un="${i.unidade}">${i.nome} (${i.unidade})</option>`).join('');
-            
             toggleModal('modal-encomenda');
         }
 
@@ -237,13 +222,12 @@
             const select = document.getElementById('enc-select-insumo');
             const option = select.options[select.selectedIndex];
             const qtd = document.getElementById('enc-ing-qtd').value;
-
             if(!qtd) return;
 
             ingredientesTemp.push({
                 insumo_id: select.value,
-                nome: option.getAttribute('data-nome'), // Apenas visual
-                unidade: option.getAttribute('data-un'), // Apenas visual
+                nome: option.getAttribute('data-nome'),
+                unidade: option.getAttribute('data-un'),
                 quantidade: Number(qtd)
             });
             atualizarListaTemp();
@@ -251,7 +235,7 @@
         }
 
         function atualizarListaTemp() {
-            document.getElementById('lista-ingredientes-temp').innerHTML = ingredientsTemp.map((ing, idx) => `
+            document.getElementById('lista-ingredientes-temp').innerHTML = ingredientesTemp.map((ing, idx) => `
                 <div class="flex justify-between border-b py-1">
                     <span>${ing.nome}</span>
                     <span>${ing.quantidade} ${ing.unidade}</span>
@@ -265,13 +249,11 @@
                 preco_venda: Number(document.getElementById('enc-preco').value),
                 ingredientes: ingredientesTemp.map(({insumo_id, quantidade, unidade}) => ({insumo_id, quantidade, unidade}))
             };
-            
             await api('/encomendas', 'POST', body);
             toggleModal('modal-encomenda');
             carregarEncomendas();
         }
 
-        // --- VENDAS ---
         async function carregarSelectEncomendas() {
             const dados = await api('/encomendas');
             const select = document.getElementById('venda-encomenda');
@@ -282,13 +264,11 @@
             const msg = document.getElementById('msg-venda');
             msg.innerHTML = "Processando...";
             msg.className = "text-center text-gray-500";
-
             const body = {
                 encomenda_id: document.getElementById('venda-encomenda').value,
                 quantidade: Number(document.getElementById('venda-qtd').value)
             };
 
-            // Usando fetch direto para tratar erros de status 400 (estoque)
             const res = await fetch(API_URL + '/vendas', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -306,28 +286,16 @@
             }
         }
 
-        // --- BALANÇO ---
         async function carregarBalanco() {
             const mes = document.getElementById('mes-balanco').value;
             if(!mes) return alert("Selecione um mês");
-
             const dados = await api(`/balanco?mes=${mes}`);
-            
             document.getElementById('bal-faturamento').innerText = `R$ ${dados.total_vendas?.toFixed(2) || '0.00'}`;
             document.getElementById('bal-custos').innerText = `R$ ${dados.total_custos?.toFixed(2) || '0.00'}`;
             document.getElementById('bal-lucro').innerText = `R$ ${dados.total_lucro?.toFixed(2) || '0.00'}`;
             document.getElementById('bal-qtd').innerText = dados.qtd_vendas || 0;
         }
-
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', () => {
-            carregarSelectEncomendas(); // Carrega tela inicial
-            
-            // Define mes atual no input de balanço
-            const hoje = new Date().toISOString().slice(0, 7);
-            document.getElementById('mes-balanco').value = hoje;
-        });
-
     </script>
+
 </body>
 </html>
