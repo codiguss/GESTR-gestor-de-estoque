@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão Confeitaria</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f3f4f6; font-family: sans-serif; padding-bottom: 80px; }
+        .nav-item { cursor: pointer; transition: all 0.2s; }
+        .nav-item.active { color: #db2777; }
+        .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 12px; }
+        .fab { position: fixed; bottom: 80px; right: 20px; background: #db2777; color: white; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 10px rgba(219, 39, 119, 0.4); cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <header class="bg-pink-600 text-white p-4 shadow-md sticky top-0 z-50">
+        <h1 class="text-xl font-bold text-center">Doce Gestão 🍰</h1>
+    </header>
+
+    <main id="app" class="p-4 max-w-md mx-auto">
+        
+        <div id="view-vendas" class="view">
+            <h2 class="text-gray-600 font-bold mb-4 uppercase text-sm">Registrar Venda</h2>
+            <div class="card">
+                <label class="block text-sm text-gray-500 mb-1">Encomenda</label>
+                <select id="venda-encomenda" class="w-full p-3 border rounded mb-3 bg-gray-50"></select>
+                
+                <label class="block text-sm text-gray-500 mb-1">Quantidade</label>
+                <input type="number" id="venda-qtd" class="w-full p-3 border rounded mb-4" value="1">
+                
+                <button onclick="registrarVenda()" class="w-full bg-pink-600 text-white py-3 rounded font-bold shadow hover:bg-pink-700">
+                    Confirmar Venda
+                </button>
+            </div>
+            <div id="msg-venda" class="mt-2 text-center text-sm font-bold"></div>
+        </div>
+
+        <div id="view-insumos" class="view hidden">
+            <h2 class="text-gray-600 font-bold mb-4 uppercase text-sm">Estoque de Insumos</h2>
+            <div id="lista-insumos"></div>
+            
+            <div class="fab" onclick="toggleModal('modal-insumo')">+</div>
+        </div>
+
+        <div id="view-encomendas" class="view hidden">
+            <h2 class="text-gray-600 font-bold mb-4 uppercase text-sm">Catálogo de Produtos</h2>
+            <div id="lista-encomendas"></div>
+            
+            <div class="fab" onclick="abrirCriarEncomenda()">+</div>
+        </div>
+
+        <div id="view-balanco" class="view hidden">
+            <h2 class="text-gray-600 font-bold mb-4 uppercase text-sm">Financeiro</h2>
+            <div class="flex gap-2 mb-4">
+                <input type="month" id="mes-balanco" class="flex-1 p-2 border rounded">
+                <button onclick="carregarBalanco()" class="bg-blue-600 text-white px-4 rounded">Filtrar</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="card bg-green-50 border-l-4 border-green-500">
+                    <span class="text-xs text-gray-500">Faturamento</span>
+                    <div class="text-xl font-bold text-green-700" id="bal-faturamento">R$ 0,00</div>
+                </div>
+                <div class="card bg-red-50 border-l-4 border-red-500">
+                    <span class="text-xs text-gray-500">Custos</span>
+                    <div class="text-xl font-bold text-red-700" id="bal-custos">R$ 0,00</div>
+                </div>
+                <div class="card col-span-2 bg-blue-50 border-l-4 border-blue-600">
+                    <span class="text-xs text-gray-500">Lucro Líquido</span>
+                    <div class="text-2xl font-bold text-blue-800" id="bal-lucro">R$ 0,00</div>
+                </div>
+                 <div class="card col-span-2 text-center">
+                    <span class="text-xs text-gray-500">Total de Vendas</span>
+                    <div class="text-lg font-bold text-gray-700" id="bal-qtd">0</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="modal-insumo" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm">
+            <h3 class="font-bold text-lg mb-4">Novo Insumo</h3>
+            <input id="ins-nome" placeholder="Nome (ex: Farinha)" class="w-full border p-2 mb-2 rounded">
+            <div class="flex gap-2">
+                <input id="ins-qtd" type="number" placeholder="Qtd" class="w-1/2 border p-2 mb-2 rounded">
+                <input id="ins-un" placeholder="Un (kg, g)" class="w-1/2 border p-2 mb-2 rounded">
+            </div>
+            <input id="ins-preco" type="number" placeholder="Preço de Compra (R$)" class="w-full border p-2 mb-4 rounded">
+            <div class="flex justify-end gap-2">
+                <button onclick="toggleModal('modal-insumo')" class="px-4 py-2 text-gray-500">Cancelar</button>
+                <button onclick="salvarInsumo()" class="px-4 py-2 bg-pink-600 text-white rounded">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-encomenda" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto">
+            <h3 class="font-bold text-lg mb-4">Nova Receita/Encomenda</h3>
+            <input id="enc-nome" placeholder="Nome do Produto" class="w-full border p-2 mb-2 rounded">
+            <input id="enc-preco" type="number" placeholder="Preço de Venda (R$)" class="w-full border p-2 mb-4 rounded">
+            
+            <div class="bg-gray-100 p-3 rounded mb-4">
+                <p class="text-xs font-bold mb-2">ADICIONAR INGREDIENTE:</p>
+                <select id="enc-select-insumo" class="w-full border p-2 mb-2 rounded bg-white"></select>
+                <div class="flex gap-2">
+                    <input id="enc-ing-qtd" type="number" placeholder="Qtd usada" class="w-2/3 border p-2 rounded">
+                    <button onclick="addIngredienteLista()" class="w-1/3 bg-gray-800 text-white rounded text-sm">Add +</button>
+                </div>
+            </div>
+
+            <div id="lista-ingredientes-temp" class="text-sm text-gray-600 mb-4">
+                </div>
+
+            <div class="flex justify-end gap-2">
+                <button onclick="toggleModal('modal-encomenda')" class="px-4 py-2 text-gray-500">Cancelar</button>
+                <button onclick="salvarEncomenda()" class="px-4 py-2 bg-pink-600 text-white rounded">Salvar Produto</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="fixed bottom-0 left-0 w-full bg-white border-t flex justify-around py-3 text-xs font-bold text-gray-400 z-40">
+        <div class="nav-item active flex flex-col items-center" onclick="navTo('vendas', this)">
+            <i class="fas fa-cash-register text-xl mb-1"></i> Vender
+        </div>
+        <div class="nav-item flex flex-col items-center" onclick="navTo('insumos', this)">
+            <i class="fas fa-boxes text-xl mb-1"></i> Estoque
+        </div>
+        <div class="nav-item flex flex-col items-center" onclick="navTo('encomendas', this)">
+            <i class="fas fa-birthday-cake text-xl mb-1"></i> Produtos
+        </div>
+        <div class="nav-item flex flex-col items-center" onclick="navTo('balanco', this)">
+            <i class="fas fa-chart-pie text-xl mb-1"></i> Balanço
+        </div>
+    </nav>
+
+    <script>
+        const API_URL = "http://localhost:3000";
+        
+        // Estado temporário para criação de encomenda
+        let ingredientesTemp = []; 
+
+        // --- NAVEGAÇÃO ---
+        function navTo(screenId, el) {
+            document.querySelectorAll('.view').forEach(d => d.classList.add('hidden'));
+            document.getElementById('view-' + screenId).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(d => d.classList.remove('active'));
+            if(el) el.classList.add('active');
+
+            // Carregar dados específicos ao entrar na tela
+            if(screenId === 'insumos') carregarInsumos();
+            if(screenId === 'encomendas') carregarEncomendas();
+            if(screenId === 'vendas') carregarSelectEncomendas();
+        }
+
+        function toggleModal(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+        }
+
+        // --- API HELPER ---
+        async function api(endpoint, method = 'GET', body = null) {
+            const options = { method, headers: { 'Content-Type': 'application/json' } };
+            if (body) options.body = JSON.stringify(body);
+            try {
+                const res = await fetch(API_URL + endpoint, options);
+                return await res.json();
+            } catch (error) {
+                alert("Erro de conexão com o servidor!");
+                console.error(error);
+                return null;
+            }
+        }
+
+        // --- INSUMOS ---
+        async function carregarInsumos() {
+            const dados = await api('/insumos');
+            const lista = document.getElementById('lista-insumos');
+            lista.innerHTML = dados.map(i => `
+                <div class="card flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-gray-800">${i.nome}</div>
+                        <div class="text-xs text-gray-500">R$ ${i.preco_compra} / ${i.unidade}</div>
+                    </div>
+                    <div class="bg-gray-100 px-3 py-1 rounded font-bold ${i.quantidade < 5 ? 'text-red-500' : 'text-gray-700'}">
+                        ${i.quantidade} ${i.unidade}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function salvarInsumo() {
+            const body = {
+                nome: document.getElementById('ins-nome').value,
+                quantidade: Number(document.getElementById('ins-qtd').value),
+                unidade: document.getElementById('ins-un').value,
+                preco_compra: Number(document.getElementById('ins-preco').value)
+            };
+            await api('/insumos', 'POST', body);
+            toggleModal('modal-insumo');
+            carregarInsumos();
+            // Limpar form
+            document.getElementById('ins-nome').value = '';
+        }
+
+        // --- ENCOMENDAS ---
+        async function carregarEncomendas() {
+            const dados = await api('/encomendas');
+            document.getElementById('lista-encomendas').innerHTML = dados.map(e => `
+                <div class="card">
+                    <div class="flex justify-between">
+                        <span class="font-bold">${e.nome}</span>
+                        <span class="text-green-600 font-bold">R$ ${e.preco_venda.toFixed(2)}</span>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-1">${e.ingredientes.length} ingredientes</div>
+                </div>
+            `).join('');
+        }
+
+        async function abrirCriarEncomenda() {
+            ingredientesTemp = [];
+            atualizarListaTemp();
+            
+            // Carregar insumos no select
+            const insumos = await api('/insumos');
+            const select = document.getElementById('enc-select-insumo');
+            select.innerHTML = insumos.map(i => `<option value="${i._id}" data-nome="${i.nome}" data-un="${i.unidade}">${i.nome} (${i.unidade})</option>`).join('');
+            
+            toggleModal('modal-encomenda');
+        }
+
+        function addIngredienteLista() {
+            const select = document.getElementById('enc-select-insumo');
+            const option = select.options[select.selectedIndex];
+            const qtd = document.getElementById('enc-ing-qtd').value;
+
+            if(!qtd) return;
+
+            ingredientesTemp.push({
+                insumo_id: select.value,
+                nome: option.getAttribute('data-nome'), // Apenas visual
+                unidade: option.getAttribute('data-un'), // Apenas visual
+                quantidade: Number(qtd)
+            });
+            atualizarListaTemp();
+            document.getElementById('enc-ing-qtd').value = '';
+        }
+
+        function atualizarListaTemp() {
+            document.getElementById('lista-ingredientes-temp').innerHTML = ingredientsTemp.map((ing, idx) => `
+                <div class="flex justify-between border-b py-1">
+                    <span>${ing.nome}</span>
+                    <span>${ing.quantidade} ${ing.unidade}</span>
+                </div>
+            `).join('');
+        }
+
+        async function salvarEncomenda() {
+            const body = {
+                nome: document.getElementById('enc-nome').value,
+                preco_venda: Number(document.getElementById('enc-preco').value),
+                ingredientes: ingredientesTemp.map(({insumo_id, quantidade, unidade}) => ({insumo_id, quantidade, unidade}))
+            };
+            
+            await api('/encomendas', 'POST', body);
+            toggleModal('modal-encomenda');
+            carregarEncomendas();
+        }
+
+        // --- VENDAS ---
+        async function carregarSelectEncomendas() {
+            const dados = await api('/encomendas');
+            const select = document.getElementById('venda-encomenda');
+            select.innerHTML = dados.map(e => `<option value="${e._id}">${e.nome} - R$ ${e.preco_venda}</option>`).join('');
+        }
+
+        async function registrarVenda() {
+            const msg = document.getElementById('msg-venda');
+            msg.innerHTML = "Processando...";
+            msg.className = "text-center text-gray-500";
+
+            const body = {
+                encomenda_id: document.getElementById('venda-encomenda').value,
+                quantidade: Number(document.getElementById('venda-qtd').value)
+            };
+
+            // Usando fetch direto para tratar erros de status 400 (estoque)
+            const res = await fetch(API_URL + '/vendas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            const data = await res.json();
+
+            if (res.status === 200) {
+                msg.innerHTML = `Venda Sucesso! Lucro: R$ ${data.lucro.toFixed(2)}`;
+                msg.className = "text-center text-green-600 font-bold mt-2";
+            } else {
+                msg.innerHTML = `Erro: ${data.erro || 'Falha desconhecida'}`;
+                msg.className = "text-center text-red-600 font-bold mt-2";
+            }
+        }
+
+        // --- BALANÇO ---
+        async function carregarBalanco() {
+            const mes = document.getElementById('mes-balanco').value;
+            if(!mes) return alert("Selecione um mês");
+
+            const dados = await api(`/balanco?mes=${mes}`);
+            
+            document.getElementById('bal-faturamento').innerText = `R$ ${dados.total_vendas?.toFixed(2) || '0.00'}`;
+            document.getElementById('bal-custos').innerText = `R$ ${dados.total_custos?.toFixed(2) || '0.00'}`;
+            document.getElementById('bal-lucro').innerText = `R$ ${dados.total_lucro?.toFixed(2) || '0.00'}`;
+            document.getElementById('bal-qtd').innerText = dados.qtd_vendas || 0;
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarSelectEncomendas(); // Carrega tela inicial
+            
+            // Define mes atual no input de balanço
+            const hoje = new Date().toISOString().slice(0, 7);
+            document.getElementById('mes-balanco').value = hoje;
+        });
+
+    </script>
+</body>
+</html>
