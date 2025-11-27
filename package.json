@@ -1,11 +1,10 @@
 {
-  "name": "gestr",
+  "name": "gestor-estoque",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "concurrently \"nodemon server.js\" \"live-server --port=5500\""
+    "dev": "nodemon api/index.js"
   },
   "keywords": [],
   "author": "",
